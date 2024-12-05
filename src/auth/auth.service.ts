@@ -5,13 +5,10 @@ import { Model } from 'mongoose';
 
 import * as bcryptjs  from 'bcryptjs';
 
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { CreateUserDto, UpdateAuthDto, LoginDto, ReguisterUserDto } from './dto/index.dto'
 import { User } from './entities/user.entity';
-import { LoginDto } from './dto/loguin.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { LoguinRespounse } from './interfaces/loguin-response.interface';
-import { ReguisterUserDto } from './dto/register-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -56,9 +53,7 @@ export class AuthService {
     const { email, password } = loginDto;
     const user = await this.userModel.findOne({ email });
 
-    if(!user){
-      throw new UnauthorizedException('Not valid credentials - email');
-    };
+    if(!user){ throw new UnauthorizedException('Not valid credentials - email'); };
 
     if(!bcryptjs.compareSync(password, user.password)){
       throw new UnauthorizedException('Not valid credentials - password');
@@ -72,9 +67,22 @@ export class AuthService {
     };
   };
 
-  findAll(): Promise<User[]> {
-    return this.userModel.find();
-  }
+  // Obtener todos los usuarios
+  async findAll(): Promise<User[]> {
+    const users = await this.userModel.find();
+    const userdestructuring = users.map(user => {
+      const {password, ...rest} = user.toJSON();
+      return rest;
+    });
+    return userdestructuring;
+  };
+
+  // Obtnere un usuario 
+  async findUserById(id: string): Promise<User> {
+    const user = await this.userModel.findById(id);
+    const { password, ...dataUser } = user.toJSON();
+    return dataUser;
+  };
 
   findOne(id: number) {
     return `This action returns a #${id} auth`;
